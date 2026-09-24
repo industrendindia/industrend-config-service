@@ -1,0 +1,22 @@
+server:
+  port: ${PORT:8082}
+spring:
+  application:
+    name: config-service
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/industrend}
+    username: ${DATABASE_USER:industrend}
+    password: ${DATABASE_PASSWORD:}
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX:8}
+      connection-init-sql: SET search_path TO industrendindia,pg_catalog
+  flyway:
+    default-schema: industrendindia
+    schemas: industrendindia
+    create-schemas: true
+    table: flyway_config_history
+management:
+  endpoints.web.exposure.include: health,info
+
+services:
+  internal-token: ${INTERNAL_SERVICE_TOKEN:dev-only-change-me}

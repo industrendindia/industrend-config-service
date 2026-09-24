@@ -1,0 +1,8 @@
+package in.industrend.config.api;
+import java.util.Map; import org.springframework.beans.factory.annotation.Value; import org.springframework.http.*; import org.springframework.jdbc.core.simple.JdbcClient; import org.springframework.web.bind.annotation.*;
+@RestController @RequestMapping("/internal/v1/config") public class ConfigController {
+ private final JdbcClient jdbc; private final String token; public ConfigController(JdbcClient j,@Value("${services.internal-token}")String t){jdbc=j;token=t;}
+ private void authorise(String supplied){if(token.isBlank()||!token.equals(supplied))throw new org.springframework.web.server.ResponseStatusException(HttpStatus.UNAUTHORIZED);}
+ @GetMapping("/{key}") ResponseEntity<String> get(@RequestHeader("X-Service-Token")String supplied,@PathVariable String key){authorise(supplied);return jdbc.sql("select config_value from industrendindia.app_config where config_key=:k").param("k",key).query(String.class).optional().map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());}
+ @PutMapping("/{key}") Map<String,String> put(@RequestHeader("X-Service-Token")String supplied,@PathVariable String key,@RequestBody Map<String,String> body){authorise(supplied);var value=body.getOrDefault("value","");jdbc.sql("insert into industrendindia.app_config(config_key,config_value,description) values(:k,:v,:d) on conflict(config_key) do update set config_value=excluded.config_value,description=excluded.description,updated_at=clock_timestamp(),updated_by=current_user").param("k",key).param("v",value).param("d",body.get("description")).update();return Map.of("key",key,"value",value);}
+}
